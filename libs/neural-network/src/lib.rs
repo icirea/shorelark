@@ -31,9 +31,9 @@ impl Network {
         assert!(layers.len() > 1);
 
         let layers = layers
-        .windows(2)
-        .map(|layers| Layer::random(rng, layers[0].neurons, layers[1].neurons))
-        .collect();
+            .windows(2)
+            .map(|layers| Layer::random(rng, layers[0].neurons, layers[1].neurons))
+            .collect();
 
         Self { layers }
     }
@@ -49,8 +49,8 @@ impl Layer {
 
     fn random(rng: &mut dyn RngCore, input_size: usize, output_size: usize) -> Self {
         let neurons = (0..output_size)
-        .map(|_| Neuron::random(rng, input_size))
-        .collect();
+            .map(|_| Neuron::random(rng, input_size))
+            .collect();
 
         Self { neurons }
     }
@@ -72,9 +72,7 @@ impl Neuron {
     fn random(rng: &mut dyn RngCore, input_size: usize) -> Self {
         let bias = rng.gen_range(-1.0..=1.0);
 
-        let weights = (0..input_size)
-        .map(|_| rng.gen_range(-1.0..=1.0))
-        .collect();
+        let weights = (0..input_size).map(|_| rng.gen_range(-1.0..=1.0)).collect();
 
         Self { bias, weights }
     }
@@ -104,13 +102,16 @@ mod tests {
     #[test]
     fn propagate() {
         let neuron = Neuron {
-            bias : 0.5,
+            bias: 0.5,
             weights: vec![-0.3, 0.8],
         };
 
         // Ensure `max()` (our ReLU) works
         assert_relative_eq!(neuron.propagate(&[-10.0, -10.0]), 0.0);
-        assert_relative_eq!(neuron.propagate(&[0.5, 1.0]), (-0.3 * 0.5) + (0.8 * 1.0) + 0.5);
+        assert_relative_eq!(
+            neuron.propagate(&[0.5, 1.0]),
+            (-0.3 * 0.5) + (0.8 * 1.0) + 0.5
+        );
 
         let layer = Layer {
             neurons: vec![neuron.clone(), neuron.clone()],
