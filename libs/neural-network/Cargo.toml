@@ -7,4 +7,5 @@ edition = "2024"
 rand = "0.8"
 
 [dev-dependencies]
+approx = "0.4"
 rand_chacha = "0.3"

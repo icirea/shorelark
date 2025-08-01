@@ -5,12 +5,12 @@ pub struct Network {
     layers: Vec<Layer>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Layer {
     neurons: Vec<Neuron>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Neuron {
     bias: f32,
     weights: Vec<f32>,
@@ -83,6 +83,7 @@ impl Neuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use approx::assert_relative_eq;
     use rand::SeedableRng;
     use rand_chacha::ChaCha8Rng;
 
@@ -93,7 +94,37 @@ mod tests {
         let mut rng = ChaCha8Rng::from_seed(Default::default());
         let neuron = Neuron::random(&mut rng, 4);
 
-        assert_eq!(neuron.bias, -0.6255188);
-        assert_eq!(neuron.weights, &[0.67383957, 0.8181262, 0.26284897, 0.5238807]);
+        assert_relative_eq!(neuron.bias, -0.6255188);
+        assert_relative_eq!(
+            neuron.weights.as_slice(),
+            [0.67383957, 0.8181262, 0.26284897, 0.5238807].as_ref()
+        );
+    }
+
+    #[test]
+    fn propagate() {
+        let neuron = Neuron {
+            bias : 0.5,
+            weights: vec![-0.3, 0.8],
+        };
+
+        // Ensure `max()` (our ReLU) works
+        assert_relative_eq!(neuron.propagate(&[-10.0, -10.0]), 0.0);
+        assert_relative_eq!(neuron.propagate(&[0.5, 1.0]), (-0.3 * 0.5) + (0.8 * 1.0) + 0.5);
+
+        let layer = Layer {
+            neurons: vec![neuron.clone(), neuron.clone()],
+        };
+
+        let inputs = vec![0.5, 1.0];
+        let propagate_output = layer.propagate(inputs.clone());
+        assert_relative_eq!(propagate_output.as_slice(), [1.15, 1.15].as_ref());
+
+        let network = Network {
+            layers: vec![layer.clone(), layer.clone()],
+        };
+
+        let network_output = network.propagate(inputs.clone());
+        assert_relative_eq!(network_output.as_slice(), [1.075, 1.075].as_ref());
     }
 }
