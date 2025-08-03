@@ -36,6 +36,42 @@ pub trait CrossoverMethod {
 #[derive(Clone, Debug)]
 pub struct UniformCrossover;
 
+pub trait MutationMethod {
+    fn mutate(&self, rng: &mut dyn RngCore, child: &mut Chromosome);
+}
+
+pub struct GaussianMutation {
+    /// Probability of changing a gene:
+    /// - 0.0 = no genes will be touched
+    /// - 1.0 = all genes will be touched
+    chance: f32,
+
+    /// Magnitude of that change:
+    /// - 0.0 = touched genes will not be modified
+    /// - 3.0 = touched genes will be += or -= by at most 3.0
+    coeff: f32,
+}
+
+impl GaussianMutation {
+    pub fn new(chance: f32, coeff: f32) -> Self {
+        assert!((0.0..=1.0).contains(&chance));
+
+        Self { chance, coeff }
+    }
+}
+
+impl MutationMethod for GaussianMutation {
+    fn mutate(&self, rng: &mut dyn RngCore, child: &mut Chromosome) {
+        for gene in child.iter_mut() {
+            let sign = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
+
+            if rng.gen_bool(self.chance as f64) {
+                *gene += sign * self.coeff * rng.r#gen::<f32>();
+            }
+        }
+    }
+}
+
 impl CrossoverMethod for UniformCrossover {
     fn crossover(
         &self,
@@ -204,5 +240,90 @@ mod tests {
 
         assert_eq!(diff_a, 49);
         assert_eq!(diff_b, 51);
+    }
+
+    mod gaussian_mutation {
+        use super::*;
+
+        fn actual(chance: f32, coeff: f32) -> Vec<f32> {
+            let mut rng = ChaCha8Rng::from_seed(Default::default());
+            let mut child = vec![1.0, 2.0, 3.0, 4.0, 5.0].into_iter().collect();
+
+            GaussianMutation::new(chance, coeff).mutate(&mut rng, &mut child);
+
+            child.into_iter().collect()
+        }
+        mod given_zero_chance {
+            use approx::assert_relative_eq;
+
+            fn actual(coeff: f32) -> Vec<f32> {
+                super::actual(0.0, coeff)
+            }
+            mod and_zero_coefficient {
+                use super::*;
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    let actual = actual(0.0);
+                    let expected = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+
+                    assert_relative_eq!(actual.as_slice(), expected.as_slice());
+                }
+            }
+            mod and_non_zero_coefficient {
+                use super::*;
+
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    let actual = actual(0.5);
+                    let expected = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+
+                    assert_relative_eq!(actual.as_slice(), expected.as_slice());
+                }
+            }
+        }
+
+        mod given_fifty_fifty_chance {
+            use super::*;
+            mod and_zero_coefficient {
+                use super::*;
+                use approx::assert_relative_eq;
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    let actual = actual(0.5, 0.0);
+                    let expected = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+
+                    assert_relative_eq!(actual.as_slice(), expected.as_slice());
+                }
+            }
+
+            mod and_nonzero_coefficient {
+                use super::super::*;
+                use approx::assert_relative_eq;
+
+                #[test]
+                fn slightly_changes_the_original_chromosome() {
+                    let actual = actual(0.5, 1.2);
+                    let expected = vec![1.0, 1.4614997, 3.0, 4.383233, 5.0];
+
+                    assert_relative_eq!(actual.as_slice(), expected.as_slice());
+                }
+            }
+        }
+
+        mod given_max_chance {
+            mod and_zero_coefficient {
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    todo!();
+                }
+            }
+
+            mod and_nonzero_coefficient {
+                #[test]
+                fn entirely_changes_the_original_chromosome() {
+                    todo!();
+                }
+            }
+        }
     }
 }
