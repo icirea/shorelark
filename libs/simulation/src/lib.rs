@@ -45,8 +45,8 @@ impl Simulation {
         &self.world
     }
 
-    pub fn step(&mut self) {
-        self.process_collisions();
+    pub fn step(&mut self, rng: &mut dyn RngCore) {
+        self.process_collisions(rng);
         self.process_movements();
     }
 
@@ -58,8 +58,15 @@ impl Simulation {
         }
     }
 
-    fn process_collisions(&mut self) {
-        todo!();
+    fn process_collisions(&mut self, rng: &mut dyn RngCore) {
+        for animal in &mut self.world.animals {
+            for food in &mut self.world.foods {
+                let distance = na::distance(&animal.position, &food.position);
+                if distance <= 0.01 {
+                    food.position = rng.r#gen();
+                }
+            }
+        }
     }
 }
 
