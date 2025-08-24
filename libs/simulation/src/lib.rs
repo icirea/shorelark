@@ -1,5 +1,10 @@
+pub use self::{animal::*, food::*, world::*};
 use nalgebra as na;
 use rand::{Rng, RngCore};
+
+mod animal;
+mod food;
+mod world;
 
 pub struct Simulation {
     world: World,
