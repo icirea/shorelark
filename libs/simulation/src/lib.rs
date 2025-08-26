@@ -1,8 +1,9 @@
-pub use self::{animal::*, food::*, world::*};
+pub use self::{animal::*, eye::*, food::*, world::*};
 use nalgebra as na;
 use rand::{Rng, RngCore};
 
 mod animal;
+mod eye;
 mod food;
 mod world;
 

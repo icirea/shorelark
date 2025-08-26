@@ -1,10 +1,6 @@
 use crate::*;
 
 #[derive(Debug)]
-pub struct World {
+pub struct World {}
 
-}
-
-impl World {
-    
-}
+impl World {}
